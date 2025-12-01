@@ -37,7 +37,7 @@ def main():
     print("🚀 Running CyAnno pipeline:")
     print("   ", " ".join(cmd))
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd)
 
     print("========== STDOUT ==========")
     print(result.stdout)
