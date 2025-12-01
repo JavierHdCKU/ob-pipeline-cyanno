@@ -27,34 +27,32 @@ def main():
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Match your YAML: {dataset}_predicted_labels.txt
+    # Must match the YAML: {dataset}_predicted_labels.txt
     output_file = output_dir / f"{args.name}_predicted_labels.txt"
     print(f"📄 Output will be saved to: {output_file}", flush=True)
 
-    # IMPORTANT: resolve run_cyanno.py relative to this file
+    # repo_root is the directory that contains cyanno_pipeline/
     repo_root = Path(__file__).resolve().parent
-    run_script = repo_root / "cyanno_pipeline" / "run_cyanno.py"
 
-    if not run_script.exists():
-        raise FileNotFoundError(f"run_cyanno.py not found at {run_script}")
-
-    # Use the same Python interpreter as the current process
+    # Call exactly like your manual test, but with cwd=repo_root
     cmd = [
         sys.executable,
-        str(run_script),
+        "-m",
+        "cyanno_pipeline.run_cyanno",
         args.matrix,
         args.labels,
         str(output_file),
     ]
 
-    print("🚀 Running CyAnno pipeline:", " ".join(cmd), flush=True)
+    print("🚀 Running CyAnno pipeline:")
+    print("   ", " ".join(cmd))
+    print(f"   (cwd = {repo_root})", flush=True)
 
-    # Let stdout/stderr flow through so Snakemake captures real errors
-    result = subprocess.run(cmd)
+    # IMPORTANT: cwd=repo_root so Python sees cyanno_pipeline as a top-level package
+    result = subprocess.run(cmd, cwd=str(repo_root))
 
     if result.returncode != 0:
-        # propagate CyAnno’s exit code; its traceback will be in stderr.log
-        sys.exit(result.returncode)
+        raise RuntimeError(f"❌ CyAnno crashed (exit {result.returncode})")
 
     print(f"🎉 SUCCESS — prediction saved to {output_file}", flush=True)
 
